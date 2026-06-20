@@ -40,3 +40,14 @@ def clear_range(sheet_range: str) -> None:
     service.spreadsheets().values().clear(
         spreadsheetId=SPREADSHEET_ID, range=sheet_range
     ).execute()
+
+
+def write_cell(cell: str, value: str) -> None:
+    service = _get_service()
+    body = {"values": [[value]]}
+    service.spreadsheets().values().update(
+        spreadsheetId=SPREADSHEET_ID,
+        range=cell,
+        valueInputOption="USER_ENTERED",
+        body=body,
+    ).execute()

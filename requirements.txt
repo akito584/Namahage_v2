@@ -5,3 +5,4 @@ google-auth-httplib2==0.2.0
 google-api-python-client==2.169.0
 python-dotenv==1.1.0
 google-cloud-secret-manager==2.23.3
+google-cloud-tasks==2.16.3

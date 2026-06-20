@@ -28,3 +28,7 @@ def get_thread_replies(channel: str, thread_ts: str) -> list:
 
 def open_modal(trigger_id: str, view: dict) -> dict:
     return get_client().views_open(trigger_id=trigger_id, view=view)
+
+
+def update_message(channel: str, ts: str, text: str, blocks: list = None) -> dict:
+    return get_client().chat_update(channel=channel, ts=ts, text=text, blocks=blocks)
