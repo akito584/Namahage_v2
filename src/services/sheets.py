@@ -1,4 +1,5 @@
 import os
+import google.auth
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
@@ -7,9 +8,11 @@ SPREADSHEET_ID = os.environ.get("SPREADSHEET_ID")
 
 
 def _get_service():
-    creds = service_account.Credentials.from_service_account_file(
-        os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"), scopes=SCOPES
-    )
+    sa_file = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+    if sa_file:
+        creds = service_account.Credentials.from_service_account_file(sa_file, scopes=SCOPES)
+    else:
+        creds, _ = google.auth.default(scopes=SCOPES)
     return build("sheets", "v4", credentials=creds)
 
 
