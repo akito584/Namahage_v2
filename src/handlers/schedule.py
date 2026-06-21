@@ -8,7 +8,7 @@ import logging
 import traceback
 from zoneinfo import ZoneInfo
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, stream=__import__("sys").stdout)
 JST = ZoneInfo("Asia/Tokyo")
 
 schedule_bp = Blueprint("schedule", __name__)
