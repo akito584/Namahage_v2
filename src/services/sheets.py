@@ -13,12 +13,16 @@ def _get_service():
     return build("sheets", "v4", credentials=creds)
 
 
-def read_range(sheet_range: str) -> list:
+def read_range(sheet_range: str, value_render: str = "FORMATTED_VALUE") -> list:
     service = _get_service()
     result = (
         service.spreadsheets()
         .values()
-        .get(spreadsheetId=SPREADSHEET_ID, range=sheet_range)
+        .get(
+            spreadsheetId=SPREADSHEET_ID,
+            range=sheet_range,
+            valueRenderOption=value_render,
+        )
         .execute()
     )
     return result.get("values", [])

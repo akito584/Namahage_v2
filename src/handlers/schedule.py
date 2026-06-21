@@ -19,8 +19,17 @@ REFLECTION_CHANNEL = os.environ.get("SLACK_REFLECTION_CHANNEL")
 
 
 def _normalize_date(date_val: str) -> str:
-    """スラッシュ区切りをハイフン区切りに統一する"""
-    return str(date_val)[:10].replace("/", "-")
+    """各種日付フォーマットをYYYY-MM-DDに統一する"""
+    s = str(date_val).strip()
+    # 2026/06/21 or 2026-06-21
+    if re.match(r"\d{4}[/-]\d{2}[/-]\d{2}", s):
+        return s[:10].replace("/", "-")
+    # 6月21日 or 06月21日
+    m = re.match(r"(\d{1,2})月(\d{1,2})日", s)
+    if m:
+        year = datetime.now(JST).year
+        return f"{year}-{int(m[1]):02d}-{int(m[2]):02d}"
+    return s
 
 
 def _get_today_schedule():
