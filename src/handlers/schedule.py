@@ -8,7 +8,6 @@ import logging
 import traceback
 from zoneinfo import ZoneInfo
 
-logging.basicConfig(level=logging.INFO, stream=__import__("sys").stdout)
 JST = ZoneInfo("Asia/Tokyo")
 
 schedule_bp = Blueprint("schedule", __name__)
@@ -36,14 +35,14 @@ def _get_today_schedule():
     """活動カレンダーから当日の①行を返す。講義なしの場合はNone。"""
     rows = read_range("活動カレンダー!A:K")
     today = datetime.now(JST).strftime("%Y-%m-%d")
-    logging.info(f"Today (JST): {today}, total rows: {len(rows)}")
+    print(f"[DEBUG] Today (JST): {today}, total rows: {len(rows)}", flush=True)
     for row in rows[1:]:
         if len(row) < 4:
             continue
         date_val = _normalize_date(row[1])
         slot = row[3]
         activity_time = row[10] if len(row) > 10 else ""
-        logging.info(f"Row: date={date_val}, slot={slot}, time={activity_time}")
+        print(f"[DEBUG] Row: date={date_val}, slot={slot}, time={activity_time}", flush=True)
         if date_val == today and slot == "①" and activity_time:
             return row
     return None
@@ -89,28 +88,28 @@ def check_schedule():
     try:
         if notify_time > now:
             schedule_task("/notify-absence", notify_time)
-            logging.info(f"Scheduled /notify-absence at {notify_time}")
+            print(f"[DEBUG] Scheduled /notify-absence at {notify_time}", flush=True)
 
         poll_start = notify_time if notify_time > now else now
         poll_time = poll_start + timedelta(minutes=30)
         while poll_time < start:
             schedule_task("/poll-absence", poll_time)
-            logging.info(f"Scheduled /poll-absence at {poll_time}")
+            print(f"[DEBUG] Scheduled /poll-absence at {poll_time}", flush=True)
             poll_time += timedelta(minutes=30)
 
         schedule_task("/post-reflection", end, payload={"template_type": template_type})
-        logging.info(f"Scheduled /post-reflection at {end}")
+        print(f"[DEBUG] Scheduled /post-reflection at {end}", flush=True)
 
         remind_time = end.replace(hour=0, minute=0, second=0) + timedelta(days=1)
         schedule_task("/remind-reflection", remind_time)
-        logging.info(f"Scheduled /remind-reflection at {remind_time}")
+        print(f"[DEBUG] Scheduled /remind-reflection at {remind_time}", flush=True)
 
         reset_time = (end + timedelta(days=1)).replace(hour=12, minute=0, second=0)
         schedule_task("/reset-cache", reset_time)
-        logging.info(f"Scheduled /reset-cache at {reset_time}")
+        print(f"[DEBUG] Scheduled /reset-cache at {reset_time}", flush=True)
 
     except Exception as e:
-        logging.error(f"Failed to schedule tasks: {e}\n{traceback.format_exc()}")
+        print(f"[ERROR] Failed to schedule tasks: {e}\n{traceback.format_exc()}", flush=True)
         return jsonify({"status": "error", "message": str(e)}), 500
 
     return jsonify({"status": "scheduled"}), 200
