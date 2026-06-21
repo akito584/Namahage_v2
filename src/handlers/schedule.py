@@ -4,6 +4,10 @@ from services.sheets import read_range, append_row, clear_range
 from services.slack import post_message, post_thread_message, update_message, get_thread_replies
 from utils.time_utils import parse_activity_time, absence_notify_time
 import os
+import logging
+import traceback
+
+logging.basicConfig(level=logging.INFO)
 
 schedule_bp = Blueprint("schedule", __name__)
 
@@ -64,18 +68,32 @@ def check_schedule():
     from services.tasks import schedule_task
     now = datetime.now()
 
-    if notify_time > now:
-        schedule_task("/notify-absence", notify_time)
+    try:
+        if notify_time > now:
+            schedule_task("/notify-absence", notify_time)
+            logging.info(f"Scheduled /notify-absence at {notify_time}")
 
-    poll_start = notify_time if notify_time > now else now
-    poll_time = poll_start + timedelta(minutes=30)
-    while poll_time < start:
-        schedule_task("/poll-absence", poll_time)
-        poll_time += timedelta(minutes=30)
+        poll_start = notify_time if notify_time > now else now
+        poll_time = poll_start + timedelta(minutes=30)
+        while poll_time < start:
+            schedule_task("/poll-absence", poll_time)
+            logging.info(f"Scheduled /poll-absence at {poll_time}")
+            poll_time += timedelta(minutes=30)
 
-    schedule_task("/post-reflection", end, payload={"template_type": template_type})
-    schedule_task("/remind-reflection", end.replace(hour=0, minute=0, second=0) + timedelta(days=1))
-    schedule_task("/reset-cache", (end + timedelta(days=1)).replace(hour=12, minute=0, second=0))
+        schedule_task("/post-reflection", end, payload={"template_type": template_type})
+        logging.info(f"Scheduled /post-reflection at {end}")
+
+        remind_time = end.replace(hour=0, minute=0, second=0) + timedelta(days=1)
+        schedule_task("/remind-reflection", remind_time)
+        logging.info(f"Scheduled /remind-reflection at {remind_time}")
+
+        reset_time = (end + timedelta(days=1)).replace(hour=12, minute=0, second=0)
+        schedule_task("/reset-cache", reset_time)
+        logging.info(f"Scheduled /reset-cache at {reset_time}")
+
+    except Exception as e:
+        logging.error(f"Failed to schedule tasks: {e}\n{traceback.format_exc()}")
+        return jsonify({"status": "error", "message": str(e)}), 500
 
     return jsonify({"status": "scheduled"}), 200
 
