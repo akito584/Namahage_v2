@@ -6,8 +6,10 @@ from utils.time_utils import parse_activity_time, absence_notify_time
 import os
 import logging
 import traceback
+from zoneinfo import ZoneInfo
 
 logging.basicConfig(level=logging.INFO)
+JST = ZoneInfo("Asia/Tokyo")
 
 schedule_bp = Blueprint("schedule", __name__)
 
@@ -16,16 +18,23 @@ CLOSED_CHANNEL = os.environ.get("SLACK_CLOSED_CHANNEL")
 REFLECTION_CHANNEL = os.environ.get("SLACK_REFLECTION_CHANNEL")
 
 
+def _normalize_date(date_val: str) -> str:
+    """スラッシュ区切りをハイフン区切りに統一する"""
+    return str(date_val)[:10].replace("/", "-")
+
+
 def _get_today_schedule():
     """活動カレンダーから当日の①行を返す。講義なしの場合はNone。"""
     rows = read_range("活動カレンダー!A:K")
-    today = datetime.now().strftime("%Y-%m-%d")
+    today = datetime.now(JST).strftime("%Y-%m-%d")
+    logging.info(f"Today (JST): {today}, total rows: {len(rows)}")
     for row in rows[1:]:
-        if len(row) < 11:
+        if len(row) < 4:
             continue
-        date_val = str(row[1])[:10]
-        slot = row[3] if len(row) > 3 else ""
+        date_val = _normalize_date(row[1])
+        slot = row[3]
         activity_time = row[10] if len(row) > 10 else ""
+        logging.info(f"Row: date={date_val}, slot={slot}, time={activity_time}")
         if date_val == today and slot == "①" and activity_time:
             return row
     return None

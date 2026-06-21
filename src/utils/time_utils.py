@@ -1,13 +1,16 @@
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 import re
+
+JST = ZoneInfo("Asia/Tokyo")
 
 
 def parse_activity_time(time_str: str) -> tuple[datetime, datetime]:
-    """'17:30-21:00' 形式の文字列をdatetimeのタプルに変換して返す"""
+    """'17:30-21:00' 形式の文字列をJSTのdatetimeタプルに変換して返す"""
     match = re.match(r"(\d{2}):(\d{2})-(\d{2}):(\d{2})", time_str)
     if not match:
         raise ValueError(f"Invalid time format: {time_str}")
-    now = datetime.now()
+    now = datetime.now(JST)
     start = now.replace(hour=int(match[1]), minute=int(match[2]), second=0, microsecond=0)
     end = now.replace(hour=int(match[3]), minute=int(match[4]), second=0, microsecond=0)
     return start, end
